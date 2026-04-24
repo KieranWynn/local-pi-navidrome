@@ -1,0 +1,97 @@
+# Navidrome configuration
+# Full reference: https://www.navidrome.org/docs/usage/configuration/options/
+
+# ── Paths (mapped by Docker — do not change these) ───────────────────────────
+
+# Folder where your music library is stored (read-only inside the container)
+MusicFolder = "/music"
+
+# Folder where Navidrome stores its database and cache
+DataFolder = "/data"
+
+# ── Server ────────────────────────────────────────────────────────────────────
+
+# Address to listen on. 0.0.0.0 means all interfaces — fine for home network use.
+Address = "0.0.0.0"
+
+# HTTP port Navidrome listens on
+Port = 4533
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+
+# Log verbosity. Options: error | warn | info | debug | trace
+# Use "debug" temporarily if something isn't working.
+LogLevel = "info"
+
+# ── Library scanning ──────────────────────────────────────────────────────────
+
+# How often to check the music folder for new or changed files.
+# Navidrome also watches for file changes automatically, so this is a fallback.
+# Uses cron syntax or shorthand like "@every 15m", "@hourly", "@daily".
+Scanner.Schedule = "@daily"
+
+# ── Sessions ──────────────────────────────────────────────────────────────────
+
+# How long before an idle browser session is logged out (672h = 28 days).
+SessionTimeout = "672h"
+
+# ── User interface ────────────────────────────────────────────────────────────
+
+# Default theme for new browser sessions. Must match a theme name in the UI.
+# Users can change their own theme after logging in.
+DefaultTheme = "Spotify-ish"
+
+# URL for the login page background image. Leave empty to use Navidrome's
+# built-in rotating backgrounds (requires internet access).
+UILoginBackgroundURL = ""
+
+# Message shown on the login page and in the UI welcome banner.
+UIWelcomeMessage = "Welcome to Navidrome! Enjoy the music 🎵"
+
+# ── Gravatar ──────────────────────────────────────────────────────────────────
+
+# Show Gravatar profile pictures for users who have an email address set.
+# Gravatar matches based on the email address stored in each user's profile.
+EnableGravatar = true
+
+# ── Transcoding ───────────────────────────────────────────────────────────────
+
+# Format to use when a client requests downsampling (lower bitrate) without
+# specifying a target format. Opus is efficient and widely supported.
+DefaultDownsamplingFormat = "opus"
+
+# ── Sharing ───────────────────────────────────────────────────────────────────
+
+# Enable the sharing feature, which lets users generate public links to
+# albums, tracks, or playlists. All users get equal sharing permissions
+# when this is enabled — there is no per-user control yet.
+EnableSharing = true
+
+# Default expiration time for newly created share links.
+# Accepts Go duration strings: "24h", "168h" (1 week), "8760h" (1 year), etc.
+# Individual shares can be adjusted after creation.
+DefaultShareExpiration = "48h"
+
+# Whether newly created shares allow the recipient to download the files.
+# Set to true to make shares downloadable by default.
+DefaultDownloadableShare = false
+
+# ── Anonymous data collection ─────────────────────────────────────────────────
+
+# Navidrome collects anonymous usage statistics to help improve the project
+# (no personal data or music metadata is included). See:
+# https://www.navidrome.org/docs/usage/admin/insights/
+EnableInsightsCollector = true
+
+# ── Last.fm integration ───────────────────────────────────────────────────────
+
+# Enable Last.fm for artist biographies, images, and scrobbling.
+# Users connect their own Last.fm accounts in their profile settings.
+LastFM.Enabled = true
+
+# API credentials for Last.fm metadata (artist bios, images).
+# Get your own key at: https://www.last.fm/api/account/create
+# Leave as-is if you don't need artist metadata from Last.fm — scrobbling
+# uses per-user credentials and doesn't require a server-level API key.
+LastFM.ApiKey = 'YourKeyHere'
+LastFM.Secret = 'YourSecretHere'
