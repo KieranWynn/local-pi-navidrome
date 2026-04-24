@@ -4,7 +4,7 @@
 # =============================================================================
 # Run this on a fresh Raspberry Pi OS Lite (64-bit) with:
 #
-#   curl -fsSL https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/setup.sh | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/KieranWynn/local-pi-navidrome/main/setup.sh | sudo bash
 #
 # It is safe to run again on an already-configured Pi — nothing will break.
 #
@@ -401,7 +401,7 @@ start_navidrome() {
             break
         fi
         sleep 3
-        ((attempts++))
+        attempts=$((attempts + 1))
     done
 
     if $ready; then

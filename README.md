@@ -86,21 +86,22 @@ If something goes wrong (Pi dies, SD card corrupts, etc.), just flash a fresh Ra
 You can override any default by setting environment variables before running the script:
 
 ```bash
-GITHUB_REPO="your_user/your_repo" \
+GITHUB_REPO="KieranWynn/local-pi-navidrome" \
 NAVIDROME_PORT="4533" \
 NAS_MUSIC_EXPORT="/music" \
-curl -fsSL https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/setup.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/KieranWynn/local-pi-navidrome/main/setup.sh | sudo bash
 ```
 
 | Variable | Default | Description |
 |---|---|---|
-| `GITHUB_REPO` | `YOUR_USER/YOUR_REPO` | GitHub repo containing this config |
+| `GITHUB_REPO` | `KieranWynn/local-pi-navidrome` | GitHub repo containing this config |
 | `GITHUB_BRANCH` | `main` | Branch to pull config from |
 | `APP_DIR` | `/opt/navidrome` | Where compose + config files live on the Pi |
 | `NAVIDROME_DATA_DIR` | `/var/lib/navidrome` | Where Navidrome stores its database |
 | `NAS_MOUNT_BASE` | `/mnt/nas` | Base mount point on the Pi |
-| `NAS_MUSIC_EXPORT` | `/music` | NFS export path for the music library |
-| `NAS_BACKUP_EXPORT` | `/backups/navidrome` | NFS export path for backups |
+| `NAS_EXPORT` | `/share/nas-storage` | NFS export path (top-level shared folder on the NAS) |
+| `NAS_MUSIC_SUBDIR` | `music` | Subdirectory within the share for the music library |
+| `NAS_BACKUP_SUBDIR` | `backup/navidrome-backups` | Subdirectory within the share for backups |
 | `NAVIDROME_PORT` | `4533` | Port Navidrome listens on |
 
 ---
@@ -109,12 +110,13 @@ curl -fsSL https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/setup.sh |
 
 ```
 your-nas/
-├── music/                  ← your music library (read-only access)
+├── music/                           ← your music library (read-only access)
 │   ├── Artist/
 │   │   └── Album/
 │   │       └── track.flac
-└── navidrome-backups/      ← Navidrome backups (written by backup job)
-    └── navidrome_backup_2024-01-15.tar.gz
+└── backup/
+    └── navidrome-backups/           ← Navidrome backups (written automatically)
+        └── navidrome_backup_*.tar.gz
 ```
 
 ---
