@@ -53,7 +53,7 @@ Follow these steps on a brand new Pi, or whenever you need to reinstall the oper
 6. Run the setup script:
 
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/setup.sh | sudo bash
+   curl -fsSL https://raw.githubusercontent.com/KieranWynn/local-pi-navidrome/main/setup.sh | sudo bash
    ```
 
 7. When prompted, enter your password again and press Enter. The script will take it from here.

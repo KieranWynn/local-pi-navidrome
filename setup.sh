@@ -25,7 +25,7 @@ NC='\033[0m'
 # ── CONFIG — edit these values before pushing to GitHub ──────────────────────
 # =============================================================================
 
-GITHUB_REPO="${GITHUB_REPO:-"YOUR_USER/YOUR_REPO"}"
+GITHUB_REPO="${GITHUB_REPO:-"KieranWynn/local-pi-navidrome"}"
 GITHUB_BRANCH="${GITHUB_BRANCH:-"main"}"
 
 # Where things live on the Pi
