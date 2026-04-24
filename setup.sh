@@ -85,6 +85,16 @@ ask() {
     printf -v "$var" '%s' "$input"
 }
 
+ask_secret() {
+    # ask_secret <varname> <prompt>  — input is not echoed to the screen
+    local var="$1" prompt="$2"
+    echo -ne "\n   ${BOLD}${prompt}: ${NC}"
+    local input
+    read -rs input </dev/tty
+    echo
+    printf -v "$var" '%s' "$input"
+}
+
 confirm() {
     # confirm <prompt>  →  0 = yes, 1 = no
     echo -ne "\n   ${BOLD}$* (y/n): ${NC}"
