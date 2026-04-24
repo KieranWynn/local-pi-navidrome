@@ -321,10 +321,10 @@ pull_config() {
         -e "s|{{CLOUDFLARE_TUNNEL_TOKEN}}|${CLOUDFLARE_TUNNEL_TOKEN}|g" \
         "${APP_DIR}/compose.yml"
 
-    # Permissions: owned by root:docker, not world-readable
-    chown -R root:docker "${APP_DIR}"
-    chmod 750 "${APP_DIR}"
-    find "${APP_DIR}" -type f -exec chmod 640 {} \;
+    # Permissions: owned by root, readable by all local users (including the container)
+    chown -R root:root "${APP_DIR}"
+    chmod 755 "${APP_DIR}"
+    find "${APP_DIR}" -type f -exec chmod 644 {} \;
 
     ok "Configuration is in place at ${APP_DIR}."
 }
