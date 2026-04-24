@@ -49,6 +49,10 @@ NAS_BACKUP_MOUNT="${NAS_SHARE_MOUNT}/${NAS_BACKUP_SUBDIR}"
 # Navidrome web UI port
 NAVIDROME_PORT="${NAVIDROME_PORT:-"4533"}"
 
+# Runtime inputs — can be passed as env vars to skip interactive prompts
+NAS_HOST="${NAS_HOST:-""}"
+CLOUDFLARE_TUNNEL_TOKEN="${CLOUDFLARE_TUNNEL_TOKEN:-""}"
+
 # =============================================================================
 
 FSTAB_MARKER="# navidrome-setup managed"
@@ -134,13 +138,21 @@ print_banner() {
 gather_inputs() {
     say "A couple of quick questions before we start..."
 
-    ask NAS_HOST \
-        "What is the IP address of your NAS? (e.g. 192.168.1.100)" \
-        ""
-    [[ -z "$NAS_HOST" ]] && die "NAS address is required."
+    if [[ -z "$NAS_HOST" ]]; then
+        ask NAS_HOST \
+            "What is the IP address of your NAS? (e.g. 192.168.1.100)" \
+            ""
+        [[ -z "$NAS_HOST" ]] && die "NAS address is required."
+    else
+        ok "NAS address provided via environment: ${NAS_HOST}"
+    fi
 
-    ask_secret CLOUDFLARE_TUNNEL_TOKEN \
-        "Cloudflare Tunnel token (press Enter to skip if not using a tunnel)"
+    if [[ -z "$CLOUDFLARE_TUNNEL_TOKEN" ]]; then
+        ask_secret CLOUDFLARE_TUNNEL_TOKEN \
+            "Cloudflare Tunnel token (press Enter to skip if not using a tunnel)"
+    else
+        ok "Cloudflare Tunnel token provided via environment."
+    fi
 
     echo
     echo -e "   ${BOLD}Here is what will be set up:${NC}"
