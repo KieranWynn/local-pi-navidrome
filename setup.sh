@@ -34,7 +34,7 @@ NAVIDROME_DATA_DIR="${NAVIDROME_DATA_DIR:-"/var/lib/navidrome"}"  # Navidrome DB
 
 # NAS — single NFS export (the top-level shared folder on your NAS)
 # The user will be asked for the NAS IP at runtime; paths are fixed here.
-NAS_EXPORT="${NAS_EXPORT:-"/nas-storage"}"         # NFS export path (QNAP top-level share)
+NAS_EXPORT="${NAS_EXPORT:-"/share/nas-storage"}"         # NFS export path (QNAP top-level share)
 
 # Subdirectory paths within the share for music and backups
 NAS_MUSIC_SUBDIR="${NAS_MUSIC_SUBDIR:-"music"}"
@@ -129,6 +129,9 @@ gather_inputs() {
         ""
     [[ -z "$NAS_HOST" ]] && die "NAS address is required."
 
+    ask_secret CLOUDFLARE_TUNNEL_TOKEN \
+        "Cloudflare Tunnel token (press Enter to skip if not using a tunnel)"
+
     echo
     echo -e "   ${BOLD}Here is what will be set up:${NC}"
     echo "   • NAS address     : ${NAS_HOST}"
@@ -138,6 +141,9 @@ gather_inputs() {
     echo "   • Config files    : ${APP_DIR}"
     echo "   • Navidrome data  : ${NAVIDROME_DATA_DIR}"
     echo "   • Web address     : http://$(hostname -I | awk '{print $1}'):${NAVIDROME_PORT}"
+    local tunnel_status
+    [[ -n "$CLOUDFLARE_TUNNEL_TOKEN" ]] && tunnel_status="✔ token provided" || tunnel_status="skipped"
+    echo "   • Cloudflare tunnel: ${tunnel_status}"
     echo
 
     confirm "Does that all look correct?" \
@@ -287,8 +293,10 @@ pull_config() {
     # Replace {{PLACEHOLDERS}} in compose.yml with runtime values
     sed -i \
         -e "s|{{NAS_MUSIC_MOUNT}}|${NAS_MUSIC_MOUNT}|g" \
+        -e "s|{{NAS_BACKUP_MOUNT}}|${NAS_BACKUP_MOUNT}|g" \
         -e "s|{{NAVIDROME_DATA_DIR}}|${NAVIDROME_DATA_DIR}|g" \
         -e "s|{{NAVIDROME_PORT}}|${NAVIDROME_PORT}|g" \
+        -e "s|{{CLOUDFLARE_TUNNEL_TOKEN}}|${CLOUDFLARE_TUNNEL_TOKEN}|g" \
         "${APP_DIR}/compose.yml"
 
     # Permissions: owned by root:docker, not world-readable
@@ -314,8 +322,8 @@ restore_backup() {
         return
     fi
 
-    if ! mountpoint -q "${NAS_BACKUP_MOUNT}"; then
-        warn "Backup share is not mounted — skipping restore."
+    if [[ ! -d "${NAS_BACKUP_MOUNT}" ]]; then
+        warn "Backup directory not found on NAS — skipping restore."
         ok "Navidrome will start fresh (your music library on the NAS is untouched)."
         return
     fi
