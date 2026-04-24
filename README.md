@@ -50,13 +50,17 @@ Follow these steps on a brand new Pi, or whenever you need to reinstall the oper
 
 5. If the prompt changes to `pi@raspberrycheesecake:~ $` you're in. ✅
 
-6. Run the setup script:
+6. Set your configuration variables and run the setup script. Using `export` means you can re-run the last line as many times as needed without re-entering your details:
 
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/KieranWynn/local-pi-navidrome/main/setup.sh | sudo bash
+   export NAS_HOST=10.0.4.45                  # replace with your NAS IP address
+   export CLOUDFLARE_TUNNEL_TOKEN=your_token  # omit this line if not using a tunnel
+   export LASTFM_API_KEY=your_api_key         # omit this line if not using Last.fm
+   export LASTFM_SECRET=your_api_secret       # omit this line if not using Last.fm
+   curl -fsSL https://raw.githubusercontent.com/KieranWynn/local-pi-navidrome/main/setup.sh | sudo -E bash
    ```
 
-7. When prompted, enter your password again and press Enter. The script will take it from here.
+7. When prompted for a password, enter the one you chose above and press Enter. The script will take it from here.
 
 ---
 
@@ -77,20 +81,31 @@ The script is **safe to run more than once** — it won't break an already worki
 
 ### Re-running / disaster recovery
 
-If something goes wrong (Pi dies, SD card corrupts, etc.), just flash a fresh Raspberry Pi OS Lite 64-bit image and run the same `curl` command above. Your music library lives on the NAS and is untouched.
+If something goes wrong (Pi dies, SD card corrupts, etc.), just flash a fresh Raspberry Pi OS Lite 64-bit image and run the same commands from Step 2 above. Your music library lives on the NAS and is untouched.
 
 ---
 
 ### Customising the setup
 
-You can override any default by setting environment variables before running the script:
+You can override any default by exporting environment variables before running the script:
 
 ```bash
-GITHUB_REPO="KieranWynn/local-pi-navidrome" \
-NAVIDROME_PORT="4533" \
-NAS_MUSIC_EXPORT="/music" \
-curl -fsSL https://raw.githubusercontent.com/KieranWynn/local-pi-navidrome/main/setup.sh | sudo bash
+export NAS_HOST=10.0.4.45
+export NAS_EXPORT=/share/nas-storage
+export NAVIDROME_PORT=4533
+curl -fsSL https://raw.githubusercontent.com/KieranWynn/local-pi-navidrome/main/setup.sh | sudo -E bash
 ```
+
+**Runtime inputs** (prompted interactively if not set):
+
+| Variable | Description |
+|---|---|
+| `NAS_HOST` | IP address of your NAS |
+| `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare Tunnel token (optional) |
+| `LASTFM_API_KEY` | Last.fm API key (optional) |
+| `LASTFM_SECRET` | Last.fm API secret (optional) |
+
+**Structural defaults** (change only if your setup differs):
 
 | Variable | Default | Description |
 |---|---|---|
@@ -110,13 +125,14 @@ curl -fsSL https://raw.githubusercontent.com/KieranWynn/local-pi-navidrome/main/
 
 ```
 your-nas/
-├── music/                           ← your music library (read-only access)
-│   ├── Artist/
-│   │   └── Album/
-│   │       └── track.flac
-└── backup/
-    └── navidrome-backups/           ← Navidrome backups (written automatically)
-        └── navidrome_backup_*.tar.gz
+└── nas-storage/
+    ├── music/                           ← your music library (read-only access)
+    │   ├── Artist/
+    │   │   └── Album/
+    │   │       └── track.flac
+    └── backup/
+        └── navidrome-backups/           ← Navidrome backups (written automatically)
+            └── navidrome_backup_*.tar.gz
 ```
 
 ---
@@ -132,7 +148,7 @@ If you want to change the schedule or retention count, edit the relevant lines i
 | `ND_BACKUP_SCHEDULE` | `0 12 * * 5` | When to back up, in [cron syntax](https://en.wikipedia.org/wiki/Cron#CRON_expression). The default is every Friday at midday. |
 | `ND_BACKUP_COUNT` | `20` | How many backups to keep. Older ones are deleted automatically. |
 
-The backup destination is your NAS backup share, mounted at `/mnt/nas/backups` on the Pi. To use a different location, update `NAS_BACKUP_EXPORT` in the setup script and `ND_BACKUP_PATH` in `compose.yml` to match.
+The backup destination is your NAS backup share, at `/mnt/nas/nas-storage/backup/navidrome-backups` on the Pi. To use a different location, update `NAS_BACKUP_SUBDIR` in your environment before running the script.
 
 ---
 
@@ -153,7 +169,7 @@ sudo docker compose -f /opt/navidrome/compose.yml pull
 sudo docker compose -f /opt/navidrome/compose.yml up -d
 
 # Check NAS is mounted
-mountpoint /mnt/nas/music && echo "✔ Music NAS is mounted" || echo "✘ Not mounted"
+mountpoint /mnt/nas/nas-storage && echo "✔ NAS is mounted" || echo "✘ Not mounted"
 ```
 
 ---
@@ -172,5 +188,5 @@ mountpoint /mnt/nas/music && echo "✔ Music NAS is mounted" || echo "✘ Not mo
 
 - Raspberry Pi 3B+ or newer (tested on Pi 4)
 - Raspberry Pi OS Lite **64-bit** (fresh install recommended)
-- NAS with SMB or NFS share for music
+- NAS with NFS enabled and a shared folder exported
 - Internet connection during setup

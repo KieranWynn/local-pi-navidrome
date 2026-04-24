@@ -52,6 +52,8 @@ NAVIDROME_PORT="${NAVIDROME_PORT:-"4533"}"
 # Runtime inputs — can be passed as env vars to skip interactive prompts
 NAS_HOST="${NAS_HOST:-""}"
 CLOUDFLARE_TUNNEL_TOKEN="${CLOUDFLARE_TUNNEL_TOKEN:-""}"
+LASTFM_API_KEY="${LASTFM_API_KEY:-""}"
+LASTFM_SECRET="${LASTFM_SECRET:-""}"
 
 # =============================================================================
 
@@ -154,6 +156,21 @@ gather_inputs() {
         ok "Cloudflare Tunnel token provided via environment."
     fi
 
+    if [[ -z "$LASTFM_API_KEY" ]]; then
+        ask LASTFM_API_KEY \
+            "Last.fm API key (press Enter to skip — disables artist bios and images)" \
+            ""
+    else
+        ok "Last.fm API key provided via environment."
+    fi
+
+    if [[ -n "$LASTFM_API_KEY" && -z "$LASTFM_SECRET" ]]; then
+        ask_secret LASTFM_SECRET \
+            "Last.fm API secret"
+    elif [[ -n "$LASTFM_SECRET" ]]; then
+        ok "Last.fm API secret provided via environment."
+    fi
+
     echo
     echo -e "   ${BOLD}Here is what will be set up:${NC}"
     echo "   • NAS address     : ${NAS_HOST}"
@@ -163,9 +180,11 @@ gather_inputs() {
     echo "   • Config files    : ${APP_DIR}"
     echo "   • Navidrome data  : ${NAVIDROME_DATA_DIR}"
     echo "   • Web address     : http://$(hostname -I | awk '{print $1}'):${NAVIDROME_PORT}"
-    local tunnel_status
+    local tunnel_status lastfm_status
     [[ -n "$CLOUDFLARE_TUNNEL_TOKEN" ]] && tunnel_status="✔ token provided" || tunnel_status="skipped"
+    [[ -n "$LASTFM_API_KEY" ]] && lastfm_status="✔ configured" || lastfm_status="skipped"
     echo "   • Cloudflare tunnel: ${tunnel_status}"
+    echo "   • Last.fm          : ${lastfm_status}"
     echo
 
     confirm "Does that all look correct?" \
@@ -320,6 +339,12 @@ pull_config() {
         -e "s|{{NAVIDROME_PORT}}|${NAVIDROME_PORT}|g" \
         -e "s|{{CLOUDFLARE_TUNNEL_TOKEN}}|${CLOUDFLARE_TUNNEL_TOKEN}|g" \
         "${APP_DIR}/compose.yml"
+
+    # Replace {{PLACEHOLDERS}} in navidrome.toml with runtime values
+    sed -i \
+        -e "s|{{LASTFM_API_KEY}}|${LASTFM_API_KEY}|g" \
+        -e "s|{{LASTFM_SECRET}}|${LASTFM_SECRET}|g" \
+        "${APP_DIR}/navidrome.toml"
 
     # Permissions: owned by root, readable by all local users (including the container)
     chown -R root:root "${APP_DIR}"

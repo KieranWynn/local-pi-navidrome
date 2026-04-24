@@ -28,7 +28,7 @@ LogLevel = "info"
 # How often to check the music folder for new or changed files.
 # Navidrome also watches for file changes automatically, so this is a fallback.
 # Uses cron syntax or shorthand like "@every 15m", "@hourly", "@daily".
-Scanner.Schedule = "@daily"
+Scanner.Schedule = "@hourly"
 
 # ── Sessions ──────────────────────────────────────────────────────────────────
 
@@ -93,5 +93,5 @@ LastFM.Enabled = true
 # Get your own key at: https://www.last.fm/api/account/create
 # Leave as-is if you don't need artist metadata from Last.fm — scrobbling
 # uses per-user credentials and doesn't require a server-level API key.
-LastFM.ApiKey = 'YourKeyHere'
-LastFM.Secret = 'YourSecretHere'
+LastFM.ApiKey = '{{LASTFM_API_KEY}}'
+LastFM.Secret = '{{LASTFM_SECRET}}'
