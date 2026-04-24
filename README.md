@@ -50,10 +50,18 @@ Follow these steps on a brand new Pi, or whenever you need to reinstall the oper
 
 5. If the prompt changes to `pi@raspberrycheesecake:~ $` you're in. ✅
 
-6. Set your configuration variables and run the setup script. Using `export` means you can re-run the last line as many times as needed without re-entering your details:
+6. Set your configuration variables and run the setup script. Using `export` means you can re-run the last line as many times as needed without re-entering your details.
+
+   First, resolve your NAS's IP address by its hostname (replace `your-nas-hostname.local` with your NAS's hostname):
 
    ```bash
-   export NAS_HOST=10.0.4.45                  # replace with your NAS IP address
+   export NAS_HOST=$(nslookup your-nas-hostname.local | awk '/^Address: /{print $2}' | tail -n1)
+   echo $NAS_HOST   # verify it found a valid IP address before continuing
+   ```
+
+   Then set the remaining variables and run the script:
+
+   ```bash
    export CLOUDFLARE_TUNNEL_TOKEN=your_token  # omit this line if not using a tunnel
    export LASTFM_API_KEY=your_api_key         # omit this line if not using Last.fm
    export LASTFM_SECRET=your_api_secret       # omit this line if not using Last.fm
