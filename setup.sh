@@ -221,7 +221,7 @@ install_docker() {
     else
         # Official Docker convenience script — handles Pi ARM64 architecture correctly
         curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-        sh /tmp/get-docker.sh --quiet
+        sh /tmp/get-docker.sh
         rm -f /tmp/get-docker.sh
         ok "Docker installed."
     fi
@@ -375,16 +375,12 @@ restore_backup() {
         return
     fi
 
-    # Find the most recent backup archive
+    # Find the most recent backup — Navidrome creates plain SQLite .db files
+    # with the format: navidrome_backup_YYYY.MM.DD_HH.MM.SS.db
     local latest_backup=""
     latest_backup=$(find "${NAS_BACKUP_MOUNT}" -maxdepth 2 \
-        -name "navidrome_backup_*.tar.gz" 2>/dev/null \
+        -name "navidrome_backup_*.db" 2>/dev/null \
         | sort | tail -n1)
-
-    # Fall back to a plain directory copy if no archive found
-    if [[ -z "$latest_backup" && -d "${NAS_BACKUP_MOUNT}/navidrome_data" ]]; then
-        latest_backup="${NAS_BACKUP_MOUNT}/navidrome_data"
-    fi
 
     if [[ -z "$latest_backup" ]]; then
         ok "No backup found on the NAS — Navidrome will start fresh."
@@ -395,11 +391,7 @@ restore_backup() {
     echo "   Found backup: $(basename "${latest_backup}")"
 
     if confirm "Restore this backup now? (Recommended if you have used Navidrome before)"; then
-        if [[ "$latest_backup" == *.tar.gz ]]; then
-            tar -xzf "$latest_backup" -C "${NAVIDROME_DATA_DIR}" --strip-components=1
-        else
-            rsync -a "${latest_backup}/" "${NAVIDROME_DATA_DIR}/"
-        fi
+        cp "$latest_backup" "${NAVIDROME_DATA_DIR}/navidrome.db"
         chown -R 1000:1000 "${NAVIDROME_DATA_DIR}"
         ok "Backup restored successfully."
     else
@@ -454,8 +446,9 @@ start_navidrome() {
 # ── Step 8 — Final summary ────────────────────────────────────────────────────
 
 print_summary() {
-    local ip
+    local ip hostname
     ip=$(hostname -I | awk '{print $1}')
+    hostname=$(hostname)
 
     echo
     echo -e "${GREEN}${BOLD}"
@@ -463,8 +456,9 @@ print_summary() {
     echo "   ║           🎵  Setup complete!  🎵                    ║"
     echo "   ╚══════════════════════════════════════════════════════╝"
     echo -e "${NC}"
-    echo -e "   Open this address in any browser on your network:\n"
-    echo -e "   ${BLUE}${BOLD}      http://${ip}:${NAVIDROME_PORT}${NC}\n"
+    echo -e "   Open either address in any browser on your network:\n"
+    echo -e "   ${BLUE}${BOLD}      http://${ip}:${NAVIDROME_PORT}${NC}"
+    echo -e "   ${BLUE}${BOLD}      http://${hostname}.local:${NAVIDROME_PORT}${NC}\n"
     echo    "   ─────────────────────────────────────────────────────"
     echo    "   If something stops working:"
     echo    "     • Make sure both the Pi and the NAS are turned on"

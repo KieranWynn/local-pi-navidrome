@@ -55,7 +55,7 @@ Follow these steps on a brand new Pi, or whenever you need to reinstall the oper
    First, resolve your NAS's IP address by its hostname (replace `your-nas-hostname.local` with your NAS's hostname):
 
    ```bash
-   export NAS_HOST=$(nslookup your-nas-hostname.local | awk '/^Address: /{print $2}' | tail -n1)
+   export NAS_HOST=$(getent hosts your-nas-hostname.local | awk '{print $1}')
    echo $NAS_HOST   # verify it found a valid IP address before continuing
    ```
 
@@ -140,7 +140,7 @@ your-nas/
     │   │       └── track.flac
     └── backup/
         └── navidrome-backups/           ← Navidrome backups (written automatically)
-            └── navidrome_backup_*.tar.gz
+            └── navidrome_backup_YYYY.MM.DD_HH.MM.SS.db
 ```
 
 ---
