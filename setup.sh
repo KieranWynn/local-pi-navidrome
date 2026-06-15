@@ -145,12 +145,12 @@ read_existing_config() {
     # ── NAS_HOST ──────────────────────────────────────────────────────────────
     if [[ -z "$NAS_HOST" ]]; then
         # First preference: derive from active mount (proves it's working too)
-        local mount_host
+        local mount_host=""
         mount_host=$(mount -t nfs,nfs4 2>/dev/null \
             | grep "${NAS_SHARE_MOUNT}" \
             | awk '{print $1}' \
             | cut -d: -f1 \
-            | head -n1)
+            | head -n1 || true)
         if [[ -n "$mount_host" ]]; then
             NAS_HOST="$mount_host"
             NAS_ALREADY_MOUNTED=true
@@ -158,12 +158,12 @@ read_existing_config() {
             found_any=true
         else
             # Second preference: parse from fstab
-            local fstab_host
-            fstab_host=$(grep "$FSTAB_MARKER" /etc/fstab -A1 2>/dev/null \
+            local fstab_host=""
+            fstab_host=$(grep -A1 "$FSTAB_MARKER" /etc/fstab 2>/dev/null \
                 | grep -v "^#" \
                 | awk '{print $1}' \
                 | cut -d: -f1 \
-                | head -n1)
+                | head -n1 || true)
             if [[ -n "$fstab_host" ]]; then
                 NAS_HOST="$fstab_host"
                 ok "Found NAS host in /etc/fstab: ${NAS_HOST}"
@@ -174,10 +174,10 @@ read_existing_config() {
 
     # ── CLOUDFLARE_TUNNEL_TOKEN ───────────────────────────────────────────────
     if [[ -z "$CLOUDFLARE_TUNNEL_TOKEN" && -f "${APP_DIR}/compose.yml" ]]; then
-        local existing_token
+        local existing_token=""
         existing_token=$(grep 'TUNNEL_TOKEN:' "${APP_DIR}/compose.yml" 2>/dev/null \
             | awk '{print $2}' \
-            | tr -d '"')
+            | tr -d '"' || true)
         if [[ -n "$existing_token" ]]; then
             CLOUDFLARE_TUNNEL_TOKEN="$existing_token"
             ok "Found Cloudflare Tunnel token in existing compose.yml."
@@ -187,9 +187,9 @@ read_existing_config() {
 
     # ── LASTFM_API_KEY + LASTFM_SECRET ───────────────────────────────────────
     if [[ -z "$LASTFM_API_KEY" && -f "${APP_DIR}/navidrome.toml" ]]; then
-        local existing_key
+        local existing_key=""
         existing_key=$(grep "LastFM.ApiKey" "${APP_DIR}/navidrome.toml" 2>/dev/null \
-            | cut -d"'" -f2)
+            | cut -d"'" -f2 || true)
         if [[ -n "$existing_key" ]]; then
             LASTFM_API_KEY="$existing_key"
             ok "Found Last.fm API key in existing navidrome.toml."
@@ -198,9 +198,9 @@ read_existing_config() {
     fi
 
     if [[ -z "$LASTFM_SECRET" && -f "${APP_DIR}/navidrome.toml" ]]; then
-        local existing_secret
+        local existing_secret=""
         existing_secret=$(grep "LastFM.Secret" "${APP_DIR}/navidrome.toml" 2>/dev/null \
-            | cut -d"'" -f2)
+            | cut -d"'" -f2 || true)
         if [[ -n "$existing_secret" ]]; then
             LASTFM_SECRET="$existing_secret"
             ok "Found Last.fm API secret in existing navidrome.toml."
@@ -217,12 +217,9 @@ read_existing_config() {
 
 gather_inputs() {
     local needs_input=false
-
-    # Only say something if we actually need to ask
-    if [[ -z "$NAS_HOST" || ( -z "$CLOUDFLARE_TUNNEL_TOKEN" ) || -z "$LASTFM_API_KEY" ]]; then
+    if [[ -z "$NAS_HOST" || -z "$CLOUDFLARE_TUNNEL_TOKEN" || -z "$LASTFM_API_KEY" ]]; then
         needs_input=true
     fi
-
     if $needs_input; then
         say "A couple of quick questions before we start..."
     fi
