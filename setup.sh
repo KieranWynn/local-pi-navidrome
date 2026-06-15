@@ -50,6 +50,7 @@ NAVIDROME_PORT="${NAVIDROME_PORT:-"4533"}"
 
 # Runtime inputs — can be passed as env vars to skip interactive prompts
 NAS_HOST="${NAS_HOST:-""}"
+NAS_HOSTNAME="${NAS_HOSTNAME:-""}"       # optional: hostname to resolve NAS IP (e.g. nas.local)
 CLOUDFLARE_TUNNEL_TOKEN="${CLOUDFLARE_TUNNEL_TOKEN:-""}"
 LASTFM_API_KEY="${LASTFM_API_KEY:-""}"
 LASTFM_SECRET="${LASTFM_SECRET:-""}"
@@ -224,6 +225,20 @@ gather_inputs() {
     fi
 
     if [[ -z "$NAS_HOST" ]]; then
+        # Try resolving via hostname if one is configured
+        if [[ -n "$NAS_HOSTNAME" ]]; then
+            local resolved=""
+            resolved=$(getent hosts "$NAS_HOSTNAME" 2>/dev/null | awk '{print $1}' || true)
+            if [[ -n "$resolved" ]]; then
+                NAS_HOST="$resolved"
+                ok "Resolved ${NAS_HOSTNAME} → ${NAS_HOST}"
+            else
+                warn "Could not resolve '${NAS_HOSTNAME}' — please enter the IP address manually."
+            fi
+        fi
+    fi
+
+    if [[ -z "$NAS_HOST" ]]; then
         ask NAS_HOST \
             "What is the IP address of your NAS? (e.g. 192.168.1.100)" \
             ""
@@ -340,7 +355,7 @@ EOF
     fi
 
     # Attempt to mount now
-    if mountpoint -q "${NAS_SHARE_MOUNT}"; then
+    if mount -t nfs,nfs4 2>/dev/null | grep -q "${NAS_SHARE_MOUNT}"; then
         ok "${NAS_SHARE_MOUNT} is already mounted."
     else
         mount "${NAS_SHARE_MOUNT}" 2>/dev/null \
@@ -349,7 +364,7 @@ EOF
     fi
 
     # Verify the share is accessible
-    if ! mountpoint -q "${NAS_SHARE_MOUNT}"; then
+    if ! mount -t nfs,nfs4 2>/dev/null | grep -q "${NAS_SHARE_MOUNT}"; then
         die "Could not mount the NAS share (${NAS_HOST}:${NAS_EXPORT}).
 
        Things to check on your NAS (QNAP):

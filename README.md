@@ -52,19 +52,11 @@ Follow these steps on a brand new Pi, or whenever you need to reinstall the oper
 
 6. Set your configuration variables and run the setup script. Using `export` means you can re-run the last line as many times as needed without re-entering your details.
 
-   First, resolve your NAS's IP address by its hostname (replace `your-nas-hostname.local` with your NAS's hostname):
-
    ```bash
-   export NAS_HOST=$(getent hosts your-nas-hostname.local | awk '{print $1}')
-   echo $NAS_HOST   # verify it found a valid IP address before continuing
-   ```
-
-   Then set the remaining variables and run the script:
-
-   ```bash
-   export CLOUDFLARE_TUNNEL_TOKEN=your_token  # omit this line if not using a tunnel
-   export LASTFM_API_KEY=your_api_key         # omit this line if not using Last.fm
-   export LASTFM_SECRET=your_api_secret       # omit this line if not using Last.fm
+   export NAS_HOSTNAME=your-nas-hostname.local  # the script will resolve this to an IP automatically
+   export CLOUDFLARE_TUNNEL_TOKEN=your_token    # omit this line if not using a tunnel
+   export LASTFM_API_KEY=your_api_key           # omit this line if not using Last.fm
+   export LASTFM_SECRET=your_api_secret         # omit this line if not using Last.fm
    curl -fsSL https://raw.githubusercontent.com/KieranWynn/local-pi-navidrome/main/setup.sh | sudo -E bash
    ```
 
@@ -111,7 +103,8 @@ curl -fsSL https://raw.githubusercontent.com/KieranWynn/local-pi-navidrome/main/
 
 | Variable | Description |
 |---|---|
-| `NAS_HOST` | IP address of your NAS |
+| `NAS_HOST` | IP address of your NAS (resolved automatically if `NAS_HOSTNAME` is set) |
+| `NAS_HOSTNAME` | Hostname of your NAS (e.g. `nas.local`). If set, the script resolves this to an IP automatically — no need to look it up manually. |
 | `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare Tunnel token (optional) |
 | `LASTFM_API_KEY` | Last.fm API key (optional) |
 | `LASTFM_SECRET` | Last.fm API secret (optional) |
