@@ -124,7 +124,7 @@ curl -fsSL https://raw.githubusercontent.com/KieranWynn/local-pi-navidrome/main/
 | `GITHUB_BRANCH` | `main` | Branch to pull config from |
 | `APP_DIR` | `/opt/navidrome` | Where compose + config files live on the Pi |
 | `NAVIDROME_DATA_DIR` | `/var/lib/navidrome` | Where Navidrome stores its database |
-| `NAS_MOUNT_BASE` | `/mnt/nas` | Base mount point on the Pi |
+| `NAS_SHARE_MOUNT` | `/mnt/nas/nas-storage` | Where the NAS share is mounted on the Pi |
 | `NAS_EXPORT` | `/share/nas-storage` | NFS export path (top-level shared folder on the NAS) |
 | `NAS_MUSIC_SUBDIR` | `music` | Subdirectory within the share for the music library |
 | `NAS_BACKUP_SUBDIR` | `backup/navidrome-backups` | Subdirectory within the share for backups |

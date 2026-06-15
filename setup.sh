@@ -41,8 +41,7 @@ NAS_MUSIC_SUBDIR="${NAS_MUSIC_SUBDIR:-"music"}"
 NAS_BACKUP_SUBDIR="${NAS_BACKUP_SUBDIR:-"backup/navidrome-backups"}"
 
 # Where the NAS share gets mounted on the Pi, and derived subpaths
-NAS_MOUNT_BASE="${NAS_MOUNT_BASE:-"/mnt/nas"}"
-NAS_SHARE_MOUNT="${NAS_MOUNT_BASE}/nas-storage"
+NAS_SHARE_MOUNT="${NAS_SHARE_MOUNT:-"/mnt/nas/nas-storage"}"
 NAS_MUSIC_MOUNT="${NAS_SHARE_MOUNT}/${NAS_MUSIC_SUBDIR}"
 NAS_BACKUP_MOUNT="${NAS_SHARE_MOUNT}/${NAS_BACKUP_SUBDIR}"
 
