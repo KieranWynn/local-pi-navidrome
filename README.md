@@ -74,14 +74,15 @@ Follow these steps on a brand new Pi, or whenever you need to reinstall the oper
 
 ## Part 2 — What the setup script does
 
-1. **Updates** the Pi's software
-2. **Installs Docker** (the engine that runs Navidrome)
-3. **Mounts your NAS** so the Pi can read your music library (and access backups)
-4. **Downloads the latest config** from this GitHub repo
-5. **Restores a Navidrome backup** from the NAS, if one exists
-6. **Starts Navidrome** and ensures it restarts automatically when the Pi reboots
+1. **Checks for existing configuration** — reads any previously saved values (NAS host, Cloudflare token, Last.fm credentials) from the current mount, `/etc/fstab`, and config files, so re-runs require no input
+2. **Updates** the Pi's software
+3. **Installs Docker** (the engine that runs Navidrome)
+4. **Mounts your NAS** — skipped automatically if already mounted
+5. **Downloads the latest config** from this GitHub repo, substituting your saved values back in
+6. **Restores a Navidrome backup** from the NAS, if one exists and no database is present
+7. **Starts Navidrome** and ensures it restarts automatically when the Pi reboots
 
-The script is **safe to run more than once** — it won't break an already working setup.
+The script is **safe to run more than once** — on an already-configured Pi it will detect existing settings and run without prompting for any input.
 
 ---
 
@@ -89,7 +90,9 @@ The script is **safe to run more than once** — it won't break an already worki
 
 ### Re-running / disaster recovery
 
-If something goes wrong (Pi dies, SD card corrupts, etc.), just flash a fresh Raspberry Pi OS Lite 64-bit image and run the same commands from Step 2 above. Your music library lives on the NAS and is untouched.
+**To check everything is working** on an already-configured Pi, just re-run the last `curl` line — the script will detect your existing configuration and run without asking any questions.
+
+**If something goes wrong** (Pi dies, SD card corrupts, etc.), flash a fresh Raspberry Pi OS Lite 64-bit image and run the full set of commands from Step 2 above. Your music library and backups live on the NAS and are untouched.
 
 ---
 

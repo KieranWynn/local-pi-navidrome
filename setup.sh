@@ -54,6 +54,7 @@ NAS_HOST="${NAS_HOST:-""}"
 CLOUDFLARE_TUNNEL_TOKEN="${CLOUDFLARE_TUNNEL_TOKEN:-""}"
 LASTFM_API_KEY="${LASTFM_API_KEY:-""}"
 LASTFM_SECRET="${LASTFM_SECRET:-""}"
+NAS_ALREADY_MOUNTED=false   # set by read_existing_config if mount is active
 
 # =============================================================================
 
@@ -135,40 +136,118 @@ print_banner() {
     echo
 }
 
+# ── Step 0 — Read back config from existing installation (if present) ─────────
+
+read_existing_config() {
+    say "Checking for existing configuration..."
+    local found_any=false
+
+    # ── NAS_HOST ──────────────────────────────────────────────────────────────
+    if [[ -z "$NAS_HOST" ]]; then
+        # First preference: derive from active mount (proves it's working too)
+        local mount_host
+        mount_host=$(mount -t nfs,nfs4 2>/dev/null \
+            | grep "${NAS_SHARE_MOUNT}" \
+            | awk '{print $1}' \
+            | cut -d: -f1 \
+            | head -n1)
+        if [[ -n "$mount_host" ]]; then
+            NAS_HOST="$mount_host"
+            NAS_ALREADY_MOUNTED=true
+            ok "NAS is already mounted — host: ${NAS_HOST}"
+            found_any=true
+        else
+            # Second preference: parse from fstab
+            local fstab_host
+            fstab_host=$(grep "$FSTAB_MARKER" /etc/fstab -A1 2>/dev/null \
+                | grep -v "^#" \
+                | awk '{print $1}' \
+                | cut -d: -f1 \
+                | head -n1)
+            if [[ -n "$fstab_host" ]]; then
+                NAS_HOST="$fstab_host"
+                ok "Found NAS host in /etc/fstab: ${NAS_HOST}"
+                found_any=true
+            fi
+        fi
+    fi
+
+    # ── CLOUDFLARE_TUNNEL_TOKEN ───────────────────────────────────────────────
+    if [[ -z "$CLOUDFLARE_TUNNEL_TOKEN" && -f "${APP_DIR}/compose.yml" ]]; then
+        local existing_token
+        existing_token=$(grep 'TUNNEL_TOKEN:' "${APP_DIR}/compose.yml" 2>/dev/null \
+            | awk '{print $2}' \
+            | tr -d '"')
+        if [[ -n "$existing_token" ]]; then
+            CLOUDFLARE_TUNNEL_TOKEN="$existing_token"
+            ok "Found Cloudflare Tunnel token in existing compose.yml."
+            found_any=true
+        fi
+    fi
+
+    # ── LASTFM_API_KEY + LASTFM_SECRET ───────────────────────────────────────
+    if [[ -z "$LASTFM_API_KEY" && -f "${APP_DIR}/navidrome.toml" ]]; then
+        local existing_key
+        existing_key=$(grep "LastFM.ApiKey" "${APP_DIR}/navidrome.toml" 2>/dev/null \
+            | cut -d"'" -f2)
+        if [[ -n "$existing_key" ]]; then
+            LASTFM_API_KEY="$existing_key"
+            ok "Found Last.fm API key in existing navidrome.toml."
+            found_any=true
+        fi
+    fi
+
+    if [[ -z "$LASTFM_SECRET" && -f "${APP_DIR}/navidrome.toml" ]]; then
+        local existing_secret
+        existing_secret=$(grep "LastFM.Secret" "${APP_DIR}/navidrome.toml" 2>/dev/null \
+            | cut -d"'" -f2)
+        if [[ -n "$existing_secret" ]]; then
+            LASTFM_SECRET="$existing_secret"
+            ok "Found Last.fm API secret in existing navidrome.toml."
+            found_any=true
+        fi
+    fi
+
+    if ! $found_any; then
+        ok "No existing configuration found — starting fresh."
+    fi
+}
+
 # ── Step 1 — Gather inputs upfront (so the user can walk away after ~2 questions) ──
 
 gather_inputs() {
-    say "A couple of quick questions before we start..."
+    local needs_input=false
+
+    # Only say something if we actually need to ask
+    if [[ -z "$NAS_HOST" || ( -z "$CLOUDFLARE_TUNNEL_TOKEN" ) || -z "$LASTFM_API_KEY" ]]; then
+        needs_input=true
+    fi
+
+    if $needs_input; then
+        say "A couple of quick questions before we start..."
+    fi
 
     if [[ -z "$NAS_HOST" ]]; then
         ask NAS_HOST \
             "What is the IP address of your NAS? (e.g. 192.168.1.100)" \
             ""
         [[ -z "$NAS_HOST" ]] && die "NAS address is required."
-    else
-        ok "NAS address provided via environment: ${NAS_HOST}"
     fi
 
     if [[ -z "$CLOUDFLARE_TUNNEL_TOKEN" ]]; then
         ask_secret CLOUDFLARE_TUNNEL_TOKEN \
             "Cloudflare Tunnel token (press Enter to skip if not using a tunnel)"
-    else
-        ok "Cloudflare Tunnel token provided via environment."
     fi
 
     if [[ -z "$LASTFM_API_KEY" ]]; then
         ask LASTFM_API_KEY \
             "Last.fm API key (press Enter to skip — disables artist bios and images)" \
             ""
-    else
-        ok "Last.fm API key provided via environment."
     fi
 
     if [[ -n "$LASTFM_API_KEY" && -z "$LASTFM_SECRET" ]]; then
         ask_secret LASTFM_SECRET \
             "Last.fm API secret"
-    elif [[ -n "$LASTFM_SECRET" ]]; then
-        ok "Last.fm API secret provided via environment."
     fi
 
     echo
@@ -181,7 +260,7 @@ gather_inputs() {
     echo "   • Navidrome data  : ${NAVIDROME_DATA_DIR}"
     echo "   • Web address     : http://$(hostname -I | awk '{print $1}'):${NAVIDROME_PORT}"
     local tunnel_status lastfm_status
-    [[ -n "$CLOUDFLARE_TUNNEL_TOKEN" ]] && tunnel_status="✔ token provided" || tunnel_status="skipped"
+    [[ -n "$CLOUDFLARE_TUNNEL_TOKEN" ]] && tunnel_status="✔ configured" || tunnel_status="skipped"
     [[ -n "$LASTFM_API_KEY" ]] && lastfm_status="✔ configured" || lastfm_status="skipped"
     echo "   • Cloudflare tunnel: ${tunnel_status}"
     echo "   • Last.fm          : ${lastfm_status}"
@@ -243,6 +322,11 @@ install_docker() {
 
 mount_nas() {
     say "Connecting to your NAS over NFS..."
+
+    if $NAS_ALREADY_MOUNTED; then
+        ok "NAS is already mounted at ${NAS_SHARE_MOUNT} — skipping."
+        return
+    fi
 
     # Create the share mount point (subdirs are just filesystem paths within it)
     mkdir -p "${NAS_SHARE_MOUNT}"
@@ -480,6 +564,7 @@ main() {
     check_root
     print_banner
     require_internet
+    read_existing_config
     gather_inputs
     update_system
     install_docker
