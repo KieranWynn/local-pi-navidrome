@@ -37,7 +37,7 @@ NAVIDROME_DATA_DIR="${NAVIDROME_DATA_DIR:-"/var/lib/navidrome"}"  # Navidrome DB
 NAS_EXPORT="${NAS_EXPORT:-"/share/nas-storage"}"         # NFS export path (QNAP top-level share)
 
 # Subdirectory paths within the share for music and backups
-NAS_MUSIC_SUBDIR="${NAS_MUSIC_SUBDIR:-"music"}"
+NAS_MUSIC_SUBDIR="${NAS_MUSIC_SUBDIR:-"Music"}"
 NAS_BACKUP_SUBDIR="${NAS_BACKUP_SUBDIR:-"backup/navidrome-backups"}"
 
 # Where the NAS share gets mounted on the Pi, and derived subpaths
